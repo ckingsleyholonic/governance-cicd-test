@@ -1,0 +1,259 @@
+{
+  "inventory": "aa29e6d69008f9dbbe7d0ff7cf5ebca7e694984da54903adaf9e68ec17b1b336",
+  "revision": "6b1b998275ec09c57209f8cc3be9fb9efec01b42",
+  "graph_sha256": "693cc35c965b15a4b0d586a50b4c61379319ccc7c907d9e2106b06662070b7e3",
+  "nodes": [
+    {
+      "id": "e7f6b55c049df637d083",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderDestinations.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderDestinations.getOrderServiceUrl:java.lang.String()",
+      "line": 25,
+      "end": null,
+      "hpg": true
+    },
+    {
+      "id": "da32195c7234b8f6c623",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderDetails.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderDetails.<init>:void(net.chrisrichardson.ftgo.apiagateway.proxies.OrderInfo)",
+      "line": 21,
+      "end": 23,
+      "hpg": true
+    },
+    {
+      "id": "5a96585d5e261342f8b7",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderDetails.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderDetails.<init>:void(net.chrisrichardson.ftgo.apiagateway.proxies.OrderInfo,java.util.Optional,java.util.Optional,java.util.Optional)",
+      "line": 25,
+      "end": 31,
+      "hpg": true
+    },
+    {
+      "id": "bffd9b01e2a1e9f9ec77",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderDetails.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderDetails.makeOrderDetails:net.chrisrichardson.ftgo.apiagateway.orders.OrderDetails(reactor.util.function.Tuple4)",
+      "line": 58,
+      "end": 60,
+      "hpg": true
+    },
+    {
+      "id": "4dcafd89d5b2b07995ca",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderHandlers.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderHandlers.getOrderDetails:reactor.core.publisher.Mono(org.springframework.web.reactive.function.server.ServerRequest)",
+      "line": 31,
+      "end": null,
+      "hpg": true
+    },
+    {
+      "id": "df6d231830e56e8a510f",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderHandlers.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderHandlers.<lambda>0:<unresolvedSignature>(1)",
+      "line": 59,
+      "end": 59,
+      "hpg": true
+    },
+    {
+      "id": "7fc0ebe830522fc22ba8",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderHandlers.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderHandlers.<lambda>1:<unresolvedSignature>(1)",
+      "line": 56,
+      "end": 58,
+      "hpg": true
+    },
+    {
+      "id": "5907aa4c17b6c8dad553",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/proxies/AccountingService.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.proxies.AccountingService.findBillByOrderId:reactor.core.publisher.Mono(java.lang.String)",
+      "line": 9,
+      "end": null,
+      "hpg": true
+    },
+    {
+      "id": "0a27305fd4a135bf3763",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/proxies/DeliveryService.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.proxies.DeliveryService.findDeliveryByOrderId:reactor.core.publisher.Mono(java.lang.String)",
+      "line": 9,
+      "end": null,
+      "hpg": true
+    },
+    {
+      "id": "66dac342e82830d2b8ea",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/proxies/KitchenService.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.proxies.KitchenService.findTicketById:reactor.core.publisher.Mono(java.lang.String)",
+      "line": 9,
+      "end": null,
+      "hpg": true
+    },
+    {
+      "id": "01c02c6264c7b5d5a0c2",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/proxies/OrderNotFoundException.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.proxies.OrderNotFoundException.<init>:void()",
+      "line": 4,
+      "end": 5,
+      "hpg": true
+    },
+    {
+      "id": "146699bb83906505bff8",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/proxies/OrderServiceProxy.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.proxies.OrderServiceProxy.findOrderById:reactor.core.publisher.Mono(java.lang.String)",
+      "line": 22,
+      "end": null,
+      "hpg": true
+    },
+    {
+      "id": "73a3f809b5f48c681a92",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/proxies/OrderServiceProxy.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.proxies.OrderServiceProxy.<lambda>0:<unresolvedSignature>(1)",
+      "line": 27,
+      "end": 36,
+      "hpg": true
+    },
+    {
+      "id": "c8828f8d559f2e81630b",
+      "service": "ftgo-api-gateway",
+      "file": "ftgo-api-gateway/src/main/java/net/chrisrichardson/ftgo/apiagateway/orders/OrderConfiguration.java",
+      "method": "net.chrisrichardson.ftgo.apiagateway.orders.OrderConfiguration.orderHandlerRouting:org.springframework.web.reactive.function.server.RouterFunction(net.chrisrichardson.ftgo.apiagateway.orders.OrderHandlers)",
+      "line": 34,
+      "end": 37,
+      "hpg": true
+    },
+    {
+      "id": "264db57a725ceb5537a2",
+      "service": "ftgo-order-service",
+      "file": "ftgo-order-service/src/main/java/net/chrisrichardson/ftgo/orderservice/web/OrderController.java",
+      "method": "net.chrisrichardson.ftgo.orderservice.web.OrderController.getOrder:org.springframework.http.ResponseEntity(long)",
+      "line": 44,
+      "end": 48,
+      "hpg": true
+    }
+  ],
+  "edges": [
+    {
+      "from": "5a96585d5e261342f8b7",
+      "to": "da32195c7234b8f6c623",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "bffd9b01e2a1e9f9ec77",
+      "to": "5a96585d5e261342f8b7",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "bffd9b01e2a1e9f9ec77",
+      "kinds": [
+        "METHOD_REFERENCE"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "df6d231830e56e8a510f",
+      "kinds": [
+        "METHOD_REFERENCE"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "7fc0ebe830522fc22ba8",
+      "kinds": [
+        "METHOD_REFERENCE"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "5907aa4c17b6c8dad553",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "0a27305fd4a135bf3763",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "66dac342e82830d2b8ea",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "4dcafd89d5b2b07995ca",
+      "to": "146699bb83906505bff8",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "146699bb83906505bff8",
+      "to": "e7f6b55c049df637d083",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "146699bb83906505bff8",
+      "to": "73a3f809b5f48c681a92",
+      "kinds": [
+        "METHOD_REFERENCE"
+      ]
+    },
+    {
+      "from": "73a3f809b5f48c681a92",
+      "to": "01c02c6264c7b5d5a0c2",
+      "kinds": [
+        "FRAMEWORK_METHOD_CALL",
+        "METHOD_CALL"
+      ]
+    },
+    {
+      "from": "c8828f8d559f2e81630b",
+      "to": "4dcafd89d5b2b07995ca",
+      "kinds": [
+        "HTTP_ROUTE_HANDLER"
+      ]
+    },
+    {
+      "from": "146699bb83906505bff8",
+      "to": "264db57a725ceb5537a2",
+      "kinds": [
+        "HTTP_CLIENT_TO_HANDLER"
+      ]
+    }
+  ],
+  "workflow_nodes": [
+    "4dcafd89d5b2b07995ca",
+    "5907aa4c17b6c8dad553",
+    "0a27305fd4a135bf3763",
+    "66dac342e82830d2b8ea",
+    "146699bb83906505bff8",
+    "c8828f8d559f2e81630b",
+    "264db57a725ceb5537a2"
+  ]
+}
