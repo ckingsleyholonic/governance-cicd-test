@@ -1,0 +1,144 @@
+name: Holonic shared governance check
+description: Check an exact pull request commit against an approved specification revision.
+inputs:
+  api-key:
+    description: Repository-scoped platform API key.
+    required: true
+  platform-url:
+    description: Platform HTTPS origin.
+    required: true
+  project:
+    description: Platform project ID.
+    required: true
+  spec-revision:
+    description: Approved specification revision.
+    required: true
+  evidence-bundle:
+    description: Digest of the Platform baseline evidence inventory for the PR base.
+    required: false
+  coding-standards-port:
+    description: Optional loopback port for the FTGO pilot advisory evaluator.
+    required: false
+  browser-report:
+    description: Store the report at the reader-authenticated pilot Platform endpoint.
+    default: 'false'
+    required: false
+  description-gateway-port:
+    description: Optional port of the pilot model gateway on the dedicated runner loopback interface. Requires baseline evidence.
+    required: false
+  defer-verdict:
+    description: Return a verified verdict as an output so the workflow can retain evidence before enforcing it.
+    default: 'false'
+    required: false
+  github-token:
+    description: GitHub token with pull request and contents read access.
+    required: false
+    default: ${{ github.token }}
+outputs:
+  report-path:
+    description: Confirmed immutable Platform report path.
+    value: ${{ steps.check.outputs.report-path }}
+  latest-path:
+    description: Permanent portal URL path for this pull request.
+    value: ${{ steps.check.outputs.latest-path }}
+  verdict:
+    description: Verified satisfied, violated or inconclusive result for this attempt.
+    value: ${{ steps.check.outputs.verdict }}
+runs:
+  using: composite
+  steps:
+    - name: Check approved requirements
+      id: check
+      shell: bash
+      env:
+        HOLONIC_API_KEY: ${{ inputs.api-key }}
+        PLATFORM_URL: ${{ inputs.platform-url }}
+        EVIDENCE_BUNDLE: ${{ inputs.evidence-bundle }}
+        CODING_STANDARDS_PORT: ${{ inputs.coding-standards-port }}
+        DESCRIPTION_GATEWAY_PORT: ${{ inputs.description-gateway-port }}
+        PROJECT_ID: ${{ inputs.project }}
+        BROWSER_REPORT: ${{ inputs.browser-report }}
+        DEFER_VERDICT: ${{ inputs.defer-verdict }}
+        SPEC_REVISION: ${{ inputs.spec-revision }}
+        REPOSITORY: ${{ github.repository }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        RESULT_FILE: ${{ runner.temp }}/holonic-shared-v2.json
+        REPORT_FILE: ${{ runner.temp }}/holonic-shared-v2.html
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -euo pipefail
+        rm -f -- "$RESULT_FILE" "$REPORT_FILE"
+        [ -n "$PR_NUMBER" ] && [ -n "$GH_TOKEN" ] || { echo 'A pull request and GitHub read token are required' >&2; exit 2; }
+        matches_pr() {
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '[.head.sha, .base.sha] | @tsv' | \
+            grep -Fx -- "$(printf '%s\t%s' "$HEAD_SHA" "$BASE_SHA")" >/dev/null
+        }
+        matches_pr || { echo 'Pull request commits changed or are unavailable' >&2; exit 2; }
+        comparison="repos/${REPOSITORY}/compare/${BASE_SHA}...${HEAD_SHA}"
+        merge_base=$(gh api "$comparison?per_page=1" --jq '.merge_base_commit.sha') || exit 2
+        [[ "$merge_base" =~ ^[0-9a-f]{40}$ ]] || { echo 'PR merge base unavailable' >&2; exit 2; }
+        STEP="${GITHUB_ACTION_PATH}/shared_v2_review.py"
+        [ -f "$STEP" ] || STEP="${GITHUB_ACTION_PATH}/../steps/shared_v2_review.py"
+        evidence_args=()
+        published_path=$(mktemp)
+        latest_path=$(mktemp)
+        files=''
+        trap 'rm -f -- "$published_path" "$latest_path" "${files:-}"' EXIT
+        if [ -n "${EVIDENCE_BUNDLE:-}" ]; then
+          files=$(mktemp)
+          gh api "$comparison?per_page=1" --jq '.files | map({filename,previous_filename,additions,deletions,patch})' > "$files" || exit 2
+          evidence_args=(--evidence-bundle "$EVIDENCE_BUNDLE" --changed-files "$files")
+        fi
+        if [ -n "${CODING_STANDARDS_PORT:-}" ]; then
+          [[ "$CODING_STANDARDS_PORT" =~ ^[0-9]{1,5}$ ]] || CODING_STANDARDS_PORT=0
+          evidence_args+=(--coding-standards-port "$CODING_STANDARDS_PORT")
+        fi
+        if [ -n "${DESCRIPTION_GATEWAY_PORT:-}" ]; then
+          [[ -n "${EVIDENCE_BUNDLE:-}" && "$DESCRIPTION_GATEWAY_PORT" =~ ^[0-9]{1,5}$ ]] || exit 2
+          evidence_args+=(--description-gateway-port "$DESCRIPTION_GATEWAY_PORT")
+        fi
+        if [ "${BROWSER_REPORT:-false}" = true ]; then
+          [[ "$BASE_REF" =~ ^[a-zA-Z0-9_][a-zA-Z0-9._/-]{0,127}$ ]] || exit 2
+          base_tip=$(gh api "repos/$REPOSITORY/git/ref/heads/$BASE_REF" --jq '.object.sha') || exit 2
+          [[ "$base_tip" =~ ^[0-9a-f]{40}$ ]] || exit 2
+          evidence_args+=(--published-path-file "$published_path" --latest-path-file "$latest_path"
+            --base-ref "$BASE_REF" --base-tip "$base_tip" --run-number "$GITHUB_RUN_NUMBER"
+            --run-attempt "$GITHUB_RUN_ATTEMPT")
+        fi
+        if python3 "$STEP" --platform-url "$PLATFORM_URL" --project "$PROJECT_ID" --repo "$REPOSITORY" \
+          "${evidence_args[@]}" --pr-number "$PR_NUMBER" --merge-base "$merge_base" --attempt-id "${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}" --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA" --spec-revision "$SPEC_REVISION" --result-file "$RESULT_FILE" --report-file "$REPORT_FILE"; then
+          result=0
+        else
+          result=$?
+        fi
+        if ! matches_pr; then
+          rm -f -- "$RESULT_FILE" "$REPORT_FILE"
+          echo 'Pull request commits changed during the check' >&2
+          exit 2
+        fi
+        case "$result" in
+          0) verdict=satisfied ;;
+          1) verdict=violated ;;
+          3) verdict=inconclusive ;;
+          *) rm -f -- "$RESULT_FILE" "$REPORT_FILE"; exit 2 ;;
+        esac
+        if [ ! -s "$RESULT_FILE" ] || [ ! -s "$REPORT_FILE" ]; then
+          rm -f -- "$RESULT_FILE" "$REPORT_FILE"
+          exit 2
+        fi
+        if [ -n "${GITHUB_OUTPUT:-}" ]; then printf 'verdict=%s\n' "$verdict" >> "$GITHUB_OUTPUT"; fi
+        if [ -s "$published_path" ] && [ -n "${GITHUB_OUTPUT:-}" ]; then
+          path=$(cat "$published_path")
+          [[ "$path" =~ ^/reports/[a-zA-Z0-9_.-]+/check:[0-9a-f]{64}/[0-9a-f]{64}$ ]] || exit 2
+          printf 'report-path=%s\n' "$path" >> "$GITHUB_OUTPUT"
+        fi
+        if [ -s "$latest_path" ] && [ -n "${GITHUB_OUTPUT:-}" ]; then
+          path=$(cat "$latest_path")
+          [[ "$path" == "/reports/$PROJECT_ID/pr/$PR_NUMBER" ]] || exit 2
+          printf 'latest-path=%s\n' "$path" >> "$GITHUB_OUTPUT"
+        fi
+        if [ "${DEFER_VERDICT:-false}" = true ]; then exit 0; fi
+        exit "$result"
