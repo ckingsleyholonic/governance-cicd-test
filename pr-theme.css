@@ -1,0 +1,73 @@
+/* Idiom Forge review colors, following the reader's preferred appearance. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f6f8fa, #0d1117);
+  --panel: light-dark(#fff, #161b22);
+  --ink: light-dark(#1f2328, #e6edf3);
+  --muted: light-dark(#656d76, #8b949e);
+  --line: light-dark(#d0d7de, #30363d);
+  --blue: light-dark(#0969da, #4493f8);
+  --blue-soft: light-dark(#ddf4ff, #121d2f);
+  --ok: light-dark(#1a7f37, #3fb950);
+  --ok-soft: light-dark(#dafbe1, #12261b);
+  --bad: light-dark(#cf222e, #f85149);
+  --bad-soft: light-dark(#ffebe9, #2d1517);
+  --warn: light-dark(#9a6700, #d29922);
+  --warn-soft: light-dark(#fff8c5, #2b2111);
+  --purple: light-dark(#8250df, #ab7df8);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+.report-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.report-actions { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; text-align: right; }
+#report-theme {
+  flex: none; width: 2.75rem; height: 2.75rem; padding: 0; font: 1.5rem/1 system-ui;
+  color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+}
+#report-theme:hover { color: var(--blue); border-color: var(--blue); }
+body { background: var(--bg); color: var(--ink); }
+section { background: var(--panel); border-color: var(--line); }
+a, .ig-toggle, .ig-related, .eco-related { color: var(--blue); }
+:focus-visible, .analysis-tab-list button:focus-visible { outline-color: var(--blue); }
+.checked-spec, .eco-saga-details { border-color: var(--line); }
+.checked-spec blockquote { background: var(--bad-soft); border-color: var(--bad); }
+.verdict-violated, .eco-saga-violation { color: var(--bad); }
+.verdict-satisfied { color: var(--ok); }
+.verdict-inconclusive, .eco-comp-step { color: var(--warn); }
+#workflow-specifications summary:target { background: var(--warn-soft); outline-color: var(--warn); }
+.analysis-tab-list, .eco-scroll, .ig-inspector, .eco-inspector {
+  background: var(--bg); border-color: var(--line);
+}
+.analysis-tab-list button { color: var(--muted); }
+.analysis-tab-list button[aria-selected="true"] {
+  background: var(--panel); color: var(--blue); box-shadow: inset 0 -2px var(--blue);
+}
+.ig-column-title, .ig-node small, .ig-inspector-kind, .eco-stats, .eco-note, .eco-control,
+.eco-service-sub, .eco-no-methods, .eco-witness-meta, .eco-kicker, .eco-connections, .eco-legend,
+.eco-legend-potential { color: var(--muted); }
+.ig-node, .eco-control select, .eco-service {
+  background: var(--panel); border-color: var(--line); color: var(--ink);
+}
+.eco-service-label { color: var(--ink); }
+.ig-node.ig-change { border-left-color: var(--warn); }
+.ig-node.ig-downstream { border-left-color: var(--blue); }
+.ig-node.ig-specification { border-left-color: var(--purple); }
+.ig-node.selected, .eco-service.eco-participant { background: var(--blue-soft); }
+.ig-node.selected, .eco-dot:hover, .eco-dot.eco-selected { outline-color: var(--blue); }
+.eco-service.eco-participant { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.ig-edge, .eco-edge { stroke: var(--muted); }
+.ig-edge.selected, .eco-workflow-path { stroke: var(--blue); }
+.eco-saga-route { stroke: var(--purple); }
+.eco-pr-path { stroke: var(--warn); }
+#eco-arrow path { fill: var(--muted); }
+#eco-wf-arrow path { fill: var(--blue); }
+#eco-saga-arrow path { fill: var(--purple); }
+#eco-pr-arrow path { fill: var(--warn); }
+.eco-dot { background: var(--muted); border-color: var(--panel); }
+.eco-dot.eco-associated, .eco-dot.eco-witness { background: var(--blue); box-shadow: 0 0 0 2px var(--blue-soft); }
+.eco-dot.eco-witness { box-shadow: 0 0 0 1px var(--panel), 0 0 0 2px var(--blue); }
+.eco-dot.eco-saga { background: var(--purple); box-shadow: 0 0 0 2px var(--panel); }
+.eco-dot.eco-changed { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+.eco-legend-workflow, .eco-legend-witness { color: var(--blue); }
+.eco-legend-saga { color: var(--purple); }
+.eco-legend-changed, .eco-legend-path { color: var(--warn); }
