@@ -1,0 +1,62 @@
+name: Holonic HPG rule review
+description: Reviews one explicitly approved HPG rule for a pull request.
+author: Holonic
+inputs:
+  api-key:
+    description: Repository-scoped Holonic API key.
+    required: true
+  platform-url:
+    description: HTTPS origin of the platform HPG review API.
+    required: true
+  project:
+    description: Platform project ID.
+    required: true
+  binding-id:
+    description: Owner-approved HPG binding ID for the exact pull request base.
+    required: true
+  github-token:
+    description: Token with permission to read the pull request.
+    required: false
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - name: Review one HPG rule
+      shell: bash
+      env:
+        HOLONIC_API_KEY: ${{ inputs.api-key }}
+        PLATFORM_URL: ${{ inputs.platform-url }}
+        PROJECT_ID: ${{ inputs.project }}
+        BINDING_ID: ${{ inputs.binding-id }}
+        REPOSITORY: ${{ github.repository }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -euo pipefail
+        if [ -z "${PR_NUMBER}" ] || [ -z "${GH_TOKEN}" ]; then
+          echo 'HPG rule review requires a pull request and GitHub read token' >&2
+          exit 2
+        fi
+        matches_pr() {
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '[.head.sha, .base.sha] | @tsv' | \
+            grep -Fx -- "$(printf '%s\t%s' "${HEAD_SHA}" "${BASE_SHA}")" >/dev/null
+        }
+        if ! matches_pr; then
+          echo 'Pull request commits changed or could not be read' >&2
+          exit 2
+        fi
+        STEP="${GITHUB_ACTION_PATH}/hpg_review.py"
+        [ -f "$STEP" ] || STEP="${GITHUB_ACTION_PATH}/../steps/hpg_review.py"
+        if python3 "$STEP" --platform-url "$PLATFORM_URL" --project "$PROJECT_ID" \
+          --repo "$REPOSITORY" --binding-id "$BINDING_ID" --base-sha "$BASE_SHA" --head-sha "$HEAD_SHA"; then
+          result=0
+        else
+          result=$?
+        fi
+        if ! matches_pr; then
+          echo 'Pull request commits changed or could not be read during review' >&2
+          exit 2
+        fi
+        exit "$result"

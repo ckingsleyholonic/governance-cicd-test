@@ -1,0 +1,30 @@
+name: HPG rule review (isolated test)
+
+# Test-only: one explicit HPG rule, not a general governance verdict.
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  review-one-rule:
+    if: github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'hpg-e2e/change-')
+    runs-on: [self-hosted, linux, x64, hpg-isolated]
+    timeout-minutes: 30
+    steps:
+      - name: Check out trusted base commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - name: Review the approved test rule
+        uses: ./.github/actions/holonic-hpg
+        with:
+          api-key: ${{ secrets.HPG_TEST_API_KEY }}
+          platform-url: http://127.0.0.1:18295
+          project: github.hpg-test
+          binding-id: ${{ vars.HPG_TEST_BINDING_ID }}
