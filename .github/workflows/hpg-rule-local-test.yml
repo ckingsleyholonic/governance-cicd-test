@@ -21,6 +21,18 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
+      - name: Make the PR commit available to the local platform
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          set -euo pipefail
+          [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 2
+          # Fetch objects only; do not check out or run pull-request code.
+          git -C /tmp/cicd-github-hpg-e2e -c core.hooksPath=/dev/null \
+            -c credential.helper= -c 'credential.https://github.com.helper=!gh auth git-credential' \
+            fetch --no-tags origin "$HEAD_SHA"
       - name: Review the approved test rule
         uses: ./.github/actions/holonic-hpg
         with:
