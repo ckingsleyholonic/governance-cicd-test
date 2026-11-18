@@ -63,6 +63,61 @@ jobs:
         if: ${{ always() && steps.review.outputs.verdict != 'satisfied' }}
         run: exit 1
 
+  comment-analysis:
+    if: ${{ always() && !cancelled() && github.repository == 'scottswindell-hub/governance-cicd-test' && needs.shared-check.outputs.report-path != '' }}
+    needs: shared-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    concurrency:
+      group: holonic-analysis-comment-${{ github.repository_id }}-${{ github.event.pull_request.number }}
+      queue: max
+    steps:
+      - name: Post or update the PR analysis link
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CHECK_ATTEMPT: ${{ needs.shared-check.outputs.attempt }}
+          REPORT_PATH: ${{ needs.shared-check.outputs.report-path }}
+          PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
+          PROJECT_ID: "ftgo"
+        run: |
+          set -euo pipefail
+          [[ "$CHECK_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]] || exit 0
+          [[ "$REPORT_PATH" =~ ^/reports/([a-zA-Z0-9_.-]+)/check:[0-9a-f]{64}/[0-9a-f]{64}$ &&
+             "${BASH_REMATCH[1]}" == "$PROJECT_ID" ]] || exit 1
+
+          comments="repos/$REPOSITORY/issues/$PR/comments"
+          # Match the workflow marker only on GitHub Actions bot comments.
+          previous=$(gh api --paginate "$comments?per_page=100" --jq '
+            .[] | select(.user.login == "github-actions[bot]") |
+            [.id, (.body | split("\n")[0])] | @tsv')
+          comment_id=
+          while IFS=$'\t' read -r id marker; do
+            [[ "$id" =~ ^[1-9][0-9]*$ && "$marker" =~ ^'<!-- holonic-pr-analysis '([0-9]+)\.([0-9]+)' -->'$ ]] || continue
+            # A rerun of an older workflow must leave the newer report in place.
+            if (( BASH_REMATCH[1] > GITHUB_RUN_NUMBER ||
+                  (BASH_REMATCH[1] == GITHUB_RUN_NUMBER && BASH_REMATCH[2] > GITHUB_RUN_ATTEMPT) )); then
+              exit 0
+            fi
+            comment_id=$id
+          done <<< "$previous"
+
+          current=$(gh api "repos/$REPOSITORY/pulls/$PR" --jq '[.state,.head.sha,.base.sha] | @tsv')
+          [[ "$current" == "$(printf 'open\t%s\t%s' "$HEAD_SHA" "$BASE_SHA")" ]] || exit 0
+          body=$(printf '<!-- holonic-pr-analysis %s.%s -->\n[Open analysis in the Holonic Web Portal](%s%s) for commit `%s`.\n' \
+            "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "${PLATFORM_URL%/}" "$REPORT_PATH" "$HEAD_SHA")
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$REPOSITORY/issues/comments/$comment_id" -f body="$body" --silent
+          else
+            gh api --method POST "$comments" -f body="$body" --silent
+          fi
+
   publish-head:
     if: ${{ always() && !cancelled() && github.repository == 'scottswindell-hub/governance-cicd-test' }}
     needs: shared-check
