@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - id: review
-        uses: scottswindell-hub/governance-cicd-test@b5f370e3f3eb22bbf597a2d37e40e6f64724ff04
+        uses: scottswindell-hub/governance-cicd-test@5e0d95264b33a2f7ef05dff5249e55c68df24d9f
         with:
           defer-verdict: 'true'
           browser-report: 'true'
