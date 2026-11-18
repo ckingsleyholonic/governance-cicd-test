@@ -1,0 +1,126 @@
+name: Holonic shared governance check
+
+# Install from a reviewed base branch and pin the action to a reviewed commit.
+on:
+  pull_request_target:
+    branches: ["holonic-cicd-demo"]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  shared-check:
+    if: github.repository == 'scottswindell-hub/governance-cicd-test'
+    runs-on: [self-hosted, holonic-shared-v2]
+    timeout-minutes: 50
+    outputs:
+      verdict: ${{ steps.review.outputs.verdict }}
+      report-path: ${{ steps.review.outputs.report-path }}
+      artifact-id: ${{ steps.analysis_artifact.outputs.artifact-id }}
+      attempt: ${{ steps.attempt.outputs.number }}
+    steps:
+      - id: attempt
+        shell: bash
+        run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+      - id: review
+        uses: scottswindell-hub/governance-cicd-test@e4b85013d8a9a7e16a69491fe36722caa465e61f
+        with:
+          defer-verdict: 'true'
+          browser-report: 'true'
+          api-key: ${{ secrets.HOLONIC_API_KEY }}
+          platform-url: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
+          project: "ftgo"
+          description-gateway-port: '18764'
+          evidence-bundle: "aa29e6d69008f9dbbe7d0ff7cf5ebca7e694984da54903adaf9e68ec17b1b336"
+          spec-revision: "16c7cf02c49349689c814d635937db7e"
+      - name: Save retained check result
+        id: analysis_artifact
+        if: ${{ success() && steps.review.outputs.verdict != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: holonic-shared-check-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/holonic-shared-v2.json
+            ${{ runner.temp }}/holonic-shared-v2.html
+          if-no-files-found: error
+          retention-days: 30
+      - name: Link to check analysis
+        if: ${{ always() && steps.analysis_artifact.outputs.artifact-url != '' }}
+        shell: bash
+        env:
+          REPORT_PATH: ${{ steps.review.outputs.report-path }}
+          PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
+          ARTIFACT_URL: ${{ steps.analysis_artifact.outputs.artifact-url }}
+        run: |
+          if [ -n "$REPORT_PATH" ]; then
+            printf '\n[Open PR analysis](%s%s)\n' "${PLATFORM_URL%/}" "$REPORT_PATH" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          printf '\n[Download check analysis](%s)\n' "$ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce the retained verdict
+        if: ${{ always() && steps.review.outputs.verdict != 'satisfied' }}
+        run: exit 1
+
+  publish-head:
+    if: ${{ always() && !cancelled() && github.repository == 'scottswindell-hub/governance-cicd-test' }}
+    needs: shared-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+      statuses: write
+    concurrency:
+      group: holonic-status-${{ github.repository_id }}-${{ github.event.pull_request.number }}
+      queue: max
+    steps:
+      - name: Attach report to the reviewed head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          VERDICT: ${{ needs.shared-check.outputs.verdict }}
+          ARTIFACT_ID: ${{ needs.shared-check.outputs.artifact-id }}
+          CHECK_ATTEMPT: ${{ needs.shared-check.outputs.attempt }}
+          REPORT_PATH: ${{ needs.shared-check.outputs.report-path }}
+          PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
+          PROJECT_ID: "ftgo"
+          CHECK_JOB: ${{ needs.shared-check.result }}
+        run: |
+          set -euo pipefail
+          # Rerunning only the publisher cannot certify a previous attempt's analysis.
+          [[ "$CHECK_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]] || exit 1
+          context="Holonic / PR $PR"
+          # Only this serialized publisher writes the context. A rerun of an old
+          # workflow must not replace a result from a newer workflow run.
+          statuses=$(gh api --paginate "repos/$REPOSITORY/commits/$HEAD_SHA/statuses?per_page=100" \
+            --jq '.[] | [.context, .description] | @tsv')
+          while IFS=$'\t' read -r name description; do
+            [[ "$name" == "$context" ]] || continue
+            [[ "$description" =~ ^Run[[:space:]]([0-9]+)\.([0-9]+)[[:space:]] ]] || exit 2
+            if (( BASH_REMATCH[1] > GITHUB_RUN_NUMBER || (BASH_REMATCH[1] == GITHUB_RUN_NUMBER && BASH_REMATCH[2] > GITHUB_RUN_ATTEMPT) )); then
+              exit 0
+            fi
+          done <<< "$statuses"
+          current=$(gh api "repos/$REPOSITORY/pulls/$PR" --jq '[.state,.head.sha,.base.sha] | @tsv')
+          [[ "$current" == "$(printf 'open\t%s\t%s' "$HEAD_SHA" "$BASE_SHA")" ]] || exit 0
+          url="$GITHUB_SERVER_URL/$REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          state=error
+          label="analysis unavailable"
+          if [[ "$ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            url="$url/artifacts/$ARTIFACT_ID"
+            if [[ "${REPORT_PATH:-}" =~ ^/reports/([a-zA-Z0-9_.-]+)/check:[0-9a-f]{64}/[0-9a-f]{64}$ && "${BASH_REMATCH[1]}" == "$PROJECT_ID" ]]; then
+              url="${PLATFORM_URL%/}$REPORT_PATH"
+            fi
+            case "$VERDICT:$CHECK_JOB" in
+              satisfied:success) state=success; label=satisfied ;;
+              violated:failure) state=failure; label=violated ;;
+              inconclusive:failure) label=inconclusive ;;
+            esac
+          fi
+          gh api --method POST "repos/$REPOSITORY/statuses/$HEAD_SHA" -f state="$state" \
+            -f context="$context" -f target_url="$url" -f description="Run $GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT · $label" --silent
