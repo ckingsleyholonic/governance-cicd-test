@@ -34,7 +34,7 @@ jobs:
           project: "ftgo"
           description-gateway-port: '18764'
           evidence-bundle: "aa29e6d69008f9dbbe7d0ff7cf5ebca7e694984da54903adaf9e68ec17b1b336"
-          spec-revision: "16c7cf02c49349689c814d635937db7e"
+          spec-revision: "d5eb2fd5063544eab1770589840e1b2d"
       - name: Save retained check result
         id: analysis_artifact
         if: ${{ success() && steps.review.outputs.verdict != '' }}
