@@ -2,6 +2,8 @@
 
 Open a draft pull request against `holonic-cicd-demo` to see how a code change can affect another service. The example below changes the Order service’s cancellation saga and lets you inspect the possible effect on a Kitchen ticket. You can do the whole exercise in GitHub with write access to this demo repository. The analysis pages are public and require no Holonic or AWS login.
 
+[Browse the approved FTGO workflow specifications](https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com/reports/ftgo/specifications).
+
 ## 1. Make a change on a new branch
 
 Open [CancelOrderSaga.java on the demo branch](https://github.com/scottswindell-hub/governance-cicd-test/blob/holonic-cicd-demo/ftgo-order-service/src/main/java/net/chrisrichardson/ftgo/orderservice/sagas/cancelorder/CancelOrderSaga.java) and click the pencil to edit it. In `initializeSagaDefinition()`, find these two lines:
