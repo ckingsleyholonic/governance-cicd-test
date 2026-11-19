@@ -345,8 +345,6 @@ def render(result, repo, head, *, pr_number=None, platform_origin=None, pending_
     impacts = []
     for fact, chain in result.get('dependency_evidence', {}).items():
         answer = result['answers'].get(fact)
-        if answer is None:
-            continue
         source_steps = []
         for step in chain:
             old, new = step['before'], step['after']
@@ -372,8 +370,10 @@ def render(result, repo, head, *, pr_number=None, platform_origin=None, pending_
             source_steps.append('<li>' + esc(step['label']) + (' · ' + ' · '.join(links) if links else '') + patch + '</li>')
         laws = ''.join('<blockquote>' + spec_link(fact, text) + '</blockquote>'
                        for text in approved_laws.get(fact, ()))
-        impacts.append('<article>' + laws + '<p>Specification check: <strong>' + esc(answer['verdict'])
-                       + '</strong></p><ol>' + ''.join(source_steps) + '</ol></article>')
+        check = ('<p>Specification check: <strong>' + esc(answer['verdict']) + '</strong></p>'
+                 if answer is not None else
+                 '<p>No specification check was recorded for this dependency trace.</p>')
+        impacts.append('<article>' + laws + check + '<ol>' + ''.join(source_steps) + '</ol></article>')
     impact_section = ('<section><h2>Changed inputs and downstream value flow</h2>' + ''.join(impacts)
                       + '</section>') if impacts else ''
 

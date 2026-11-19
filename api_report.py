@@ -61,19 +61,19 @@ def api_section(impact, repo, base, head):
     if not impact:
         return ''
     title = '<section><h2>Gateway API impact</h2>'
-    if not impact['complete']:
-        return title + '<p>Gateway route coverage is incomplete for this comparison.</p></section>'
     summary = []
-    if not impact['changed']:
+    if not impact['complete']:
+        summary.append('Gateway route coverage is incomplete for this comparison; the trace below shows only the available evidence.')
+    if impact['complete'] and not impact['changed']:
         summary.append('The mapped gateway route and client calls are preserved.')
     def link(node, revision):
         url = source_url(repo, revision, node['file'], node['line'])
         return '<a href="' + escape(url or '', quote=True) + '">' + escape(node['method'].rsplit('.', 1)[-1]) + '</a>'
     old_routes = {public_route(r) for r in impact['before']}
     new_routes = {public_route(r) for r in impact['after']}
-    for path in sorted(old_routes - new_routes):
+    for path in sorted(old_routes - new_routes) if impact['complete'] else []:
         summary.append('Clients using ' + path + ' lose this mapped gateway entry point.')
-    for path in sorted(new_routes - old_routes):
+    for path in sorted(new_routes - old_routes) if impact['complete'] else []:
         summary.append('The new mapped gateway entry point is ' + path + '.')
     rows = []
     for label, revision, routes in [('Before', base, impact['before']), ('After', head, impact['after'])]:
@@ -92,7 +92,7 @@ def api_section(impact, repo, base, head):
     prior = {client['method']: req for r in impact['before'] for client, req in http_calls(r) if req['receiver']}
     for r in impact['after']:
         for client, req in http_calls(r):
-            if client['method'] in prior and not req['receiver']:
+            if impact['complete'] and client['method'] in prior and not req['receiver']:
                 summary.append('The gateway can no longer be traced to the previous downstream handler. '
                                'A request to the new target may fail to return order details.')
     return (title + ''.join('<p>' + escape(t) + '</p>' for t in summary)
