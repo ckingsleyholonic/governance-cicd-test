@@ -19,6 +19,7 @@ jobs:
       verdict: ${{ steps.review.outputs.verdict }}
       report-path: ${{ steps.review.outputs.report-path }}
       latest-path: ${{ steps.review.outputs.latest-path }}
+      comment-summary: ${{ steps.review.outputs.comment-summary }}
       artifact-id: ${{ steps.analysis_artifact.outputs.artifact-id }}
       attempt: ${{ steps.attempt.outputs.number }}
     steps:
@@ -26,7 +27,7 @@ jobs:
         shell: bash
         run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - id: review
-        uses: scottswindell-hub/governance-cicd-test@e921d2ea4efa7a1f476da64bbc185a69f7edb544
+        uses: scottswindell-hub/governance-cicd-test@8710c96f1bda4246bfaba035eff7c810e251d71f
         with:
           defer-verdict: 'true'
           browser-report: 'true'
@@ -87,6 +88,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           CHECK_ATTEMPT: ${{ needs.shared-check.outputs.attempt }}
           LATEST_PATH: ${{ needs.shared-check.outputs.latest-path }}
+          COMMENT_SUMMARY: ${{ needs.shared-check.outputs.comment-summary }}
           PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
           PROJECT_ID: "ftgo"
         run: |
@@ -112,8 +114,9 @@ jobs:
 
           current=$(gh api "repos/$REPOSITORY/pulls/$PR" --jq '[.state,.head.sha,.base.sha] | @tsv')
           [[ "$current" == "$(printf 'open\t%s\t%s' "$HEAD_SHA" "$BASE_SHA")" ]] || exit 0
-          body=$(printf '<!-- holonic-pr-analysis %s.%s -->\n[Open analysis in the Holonic Web Portal](%s%s).\n' \
-            "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "${PLATFORM_URL%/}" "$LATEST_PATH")
+          test -n "$COMMENT_SUMMARY"
+          summary=$(printf '%s' "$COMMENT_SUMMARY" | base64 --decode)
+          body=$(printf '<!-- holonic-pr-analysis %s.%s -->\n%s' "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "$summary")
           if [ -n "$comment_id" ]; then
             gh api --method PATCH "repos/$REPOSITORY/issues/comments/$comment_id" -f body="$body" --silent
           else
