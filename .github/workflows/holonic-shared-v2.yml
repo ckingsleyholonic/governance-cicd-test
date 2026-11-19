@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - id: review
-        uses: scottswindell-hub/governance-cicd-test@d97ed4866919127093ca50d90b1aa85797c6752e
+        uses: scottswindell-hub/governance-cicd-test@eaa75392d1042657462b736fea72374f7d1c86bf
         with:
           defer-verdict: 'true'
           browser-report: 'true'
@@ -36,7 +36,8 @@ jobs:
           description-gateway-port: '18764'
           coding-standards-port: '18765'
           evidence-bundle: "aa29e6d69008f9dbbe7d0ff7cf5ebca7e694984da54903adaf9e68ec17b1b336"
-          spec-revision: "d5eb2fd5063544eab1770589840e1b2d"
+          spec-revision: "823a81980b654e638fbae5f619b2304a"
+          expected-laws-sha256: "6c45e0ff2ab97f81c641a4ed26a48691fe15f8fe5eca7d544b6b37f9f737eb02"
       - name: Save retained check result
         id: analysis_artifact
         if: ${{ success() && steps.review.outputs.verdict != '' }}
