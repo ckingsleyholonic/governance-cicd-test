@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - id: review
-        uses: scottswindell-hub/governance-cicd-test@490b1429a7a26e7bc3e0b39e041c766310ef995d
+        uses: scottswindell-hub/governance-cicd-test@408a8542f7555e83ed63b1bdbb7c4b2070b0e497
         with:
           defer-verdict: 'true'
           browser-report: 'true'
@@ -33,6 +33,7 @@ jobs:
           platform-url: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
           project: "ftgo"
           description-gateway-port: '18764'
+          coding-standards-port: '18765'
           evidence-bundle: "aa29e6d69008f9dbbe7d0ff7cf5ebca7e694984da54903adaf9e68ec17b1b336"
           spec-revision: "d5eb2fd5063544eab1770589840e1b2d"
       - name: Save retained check result
