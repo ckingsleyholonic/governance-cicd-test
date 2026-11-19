@@ -16,6 +16,8 @@ public class PersonName {
     return firstName;
   }
 
+  @com.fasterxml.jackson.annotation.JsonAlias("lastName")
+  @com.fasterxml.jackson.annotation.JsonProperty("familyName")
   public String getLastName() {
     return lastName;
   }
