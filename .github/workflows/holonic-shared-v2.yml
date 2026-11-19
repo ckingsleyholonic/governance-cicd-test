@@ -18,6 +18,7 @@ jobs:
     outputs:
       verdict: ${{ steps.review.outputs.verdict }}
       report-path: ${{ steps.review.outputs.report-path }}
+      latest-path: ${{ steps.review.outputs.latest-path }}
       artifact-id: ${{ steps.analysis_artifact.outputs.artifact-id }}
       attempt: ${{ steps.attempt.outputs.number }}
     steps:
@@ -25,7 +26,7 @@ jobs:
         shell: bash
         run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - id: review
-        uses: scottswindell-hub/governance-cicd-test@fb7e8364a1e7b4802f30922daaddf0afc556d949
+        uses: scottswindell-hub/governance-cicd-test@d97ed4866919127093ca50d90b1aa85797c6752e
         with:
           defer-verdict: 'true'
           browser-report: 'true'
@@ -65,7 +66,7 @@ jobs:
         run: exit 1
 
   comment-analysis:
-    if: ${{ always() && !cancelled() && github.repository == 'scottswindell-hub/governance-cicd-test' && needs.shared-check.outputs.report-path != '' }}
+    if: ${{ always() && !cancelled() && github.repository == 'scottswindell-hub/governance-cicd-test' && needs.shared-check.outputs.latest-path != '' }}
     needs: shared-check
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -84,14 +85,13 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           CHECK_ATTEMPT: ${{ needs.shared-check.outputs.attempt }}
-          REPORT_PATH: ${{ needs.shared-check.outputs.report-path }}
+          LATEST_PATH: ${{ needs.shared-check.outputs.latest-path }}
           PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
           PROJECT_ID: "ftgo"
         run: |
           set -euo pipefail
           [[ "$CHECK_ATTEMPT" == "$GITHUB_RUN_ATTEMPT" ]] || exit 0
-          [[ "$REPORT_PATH" =~ ^/reports/([a-zA-Z0-9_.-]+)/check:[0-9a-f]{64}/[0-9a-f]{64}$ &&
-             "${BASH_REMATCH[1]}" == "$PROJECT_ID" ]] || exit 1
+          [[ "$LATEST_PATH" == "/reports/$PROJECT_ID/pr/$PR" ]] || exit 1
 
           comments="repos/$REPOSITORY/issues/$PR/comments"
           # Match the workflow marker only on GitHub Actions bot comments.
@@ -111,8 +111,8 @@ jobs:
 
           current=$(gh api "repos/$REPOSITORY/pulls/$PR" --jq '[.state,.head.sha,.base.sha] | @tsv')
           [[ "$current" == "$(printf 'open\t%s\t%s' "$HEAD_SHA" "$BASE_SHA")" ]] || exit 0
-          body=$(printf '<!-- holonic-pr-analysis %s.%s -->\n[Open analysis in the Holonic Web Portal](%s%s) for commit `%s`.\n' \
-            "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "${PLATFORM_URL%/}" "$REPORT_PATH" "$HEAD_SHA")
+          body=$(printf '<!-- holonic-pr-analysis %s.%s -->\n[Open analysis in the Holonic Web Portal](%s%s).\n' \
+            "$GITHUB_RUN_NUMBER" "$GITHUB_RUN_ATTEMPT" "${PLATFORM_URL%/}" "$LATEST_PATH")
           if [ -n "$comment_id" ]; then
             gh api --method PATCH "repos/$REPOSITORY/issues/comments/$comment_id" -f body="$body" --silent
           else
