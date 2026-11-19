@@ -154,6 +154,9 @@ public class Ticket {
   }
 
   public List<TicketDomainEvent> confirmCancel() {
+    if (lineItems.stream().anyMatch(item -> item.getQuantity() > 20)) {
+      throw new IllegalStateException("Bulk cancellation requires kitchen confirmation");
+    }
     switch (state) {
       case CANCEL_PENDING:
         this.state = TicketState.CANCELLED;
