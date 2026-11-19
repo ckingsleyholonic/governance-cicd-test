@@ -13,6 +13,8 @@ import javax.persistence.Embeddable;
 @Access(AccessType.FIELD)
 public class MenuItem {
 
+  private static final Money MINIMUM_PRICE = new Money("1.00");
+
   private String id;
   private String name;
   private Money price;
@@ -23,7 +25,7 @@ public class MenuItem {
   public MenuItem(String id, String name, Money price) {
     this.id = id;
     this.name = name;
-    this.price = price;
+    setPrice(price);
   }
 
   @Override
@@ -62,6 +64,6 @@ public class MenuItem {
   }
 
   public void setPrice(Money price) {
-    this.price = price;
+    this.price = price != null && !price.isGreaterThanOrEqual(MINIMUM_PRICE) ? MINIMUM_PRICE : price;
   }
 }
