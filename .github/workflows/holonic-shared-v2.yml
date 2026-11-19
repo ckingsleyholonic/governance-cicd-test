@@ -17,7 +17,6 @@ jobs:
     timeout-minutes: 50
     outputs:
       verdict: ${{ steps.review.outputs.verdict }}
-      report-path: ${{ steps.review.outputs.report-path }}
       latest-path: ${{ steps.review.outputs.latest-path }}
       comment-summary: ${{ steps.review.outputs.comment-summary }}
       artifact-id: ${{ steps.analysis_artifact.outputs.artifact-id }}
@@ -27,7 +26,7 @@ jobs:
         shell: bash
         run: printf 'number=%s\n' "$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
       - id: review
-        uses: scottswindell-hub/governance-cicd-test@8710c96f1bda4246bfaba035eff7c810e251d71f
+        uses: scottswindell-hub/governance-cicd-test@7d59b9fd0b94377532077db785e8abcf2f3fd0f4
         with:
           defer-verdict: 'true'
           browser-report: 'true'
@@ -50,18 +49,12 @@ jobs:
             ${{ runner.temp }}/holonic-shared-v2.html
           if-no-files-found: error
           retention-days: 30
-      - name: Link to check analysis
-        if: ${{ always() && steps.analysis_artifact.outputs.artifact-url != '' }}
+      - name: Summarize findings
+        if: ${{ steps.review.outputs.comment-summary != '' }}
         shell: bash
         env:
-          REPORT_PATH: ${{ steps.review.outputs.report-path }}
-          PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
-          ARTIFACT_URL: ${{ steps.analysis_artifact.outputs.artifact-url }}
-        run: |
-          if [ -n "$REPORT_PATH" ]; then
-            printf '\n[Open PR analysis](%s%s)\n' "${PLATFORM_URL%/}" "$REPORT_PATH" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          printf '\n[Download check analysis](%s)\n' "$ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+          COMMENT_SUMMARY: ${{ steps.review.outputs.comment-summary }}
+        run: printf '%s' "$COMMENT_SUMMARY" | base64 --decode >> "$GITHUB_STEP_SUMMARY"
 
       - name: Enforce the retained verdict
         if: ${{ always() && steps.review.outputs.verdict != 'satisfied' }}
@@ -146,9 +139,6 @@ jobs:
           VERDICT: ${{ needs.shared-check.outputs.verdict }}
           ARTIFACT_ID: ${{ needs.shared-check.outputs.artifact-id }}
           CHECK_ATTEMPT: ${{ needs.shared-check.outputs.attempt }}
-          REPORT_PATH: ${{ needs.shared-check.outputs.report-path }}
-          PLATFORM_URL: "https://49s1mkl7jg.execute-api.us-east-1.amazonaws.com"
-          PROJECT_ID: "ftgo"
           CHECK_JOB: ${{ needs.shared-check.result }}
         run: |
           set -euo pipefail
@@ -172,10 +162,6 @@ jobs:
           state=error
           label="analysis unavailable"
           if [[ "$ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
-            url="$url/artifacts/$ARTIFACT_ID"
-            if [[ "${REPORT_PATH:-}" =~ ^/reports/([a-zA-Z0-9_.-]+)/check:[0-9a-f]{64}/[0-9a-f]{64}$ && "${BASH_REMATCH[1]}" == "$PROJECT_ID" ]]; then
-              url="${PLATFORM_URL%/}$REPORT_PATH"
-            fi
             case "$VERDICT:$CHECK_JOB" in
               satisfied:success) state=success; label=satisfied ;;
               violated:failure) state=failure; label=violated ;;
