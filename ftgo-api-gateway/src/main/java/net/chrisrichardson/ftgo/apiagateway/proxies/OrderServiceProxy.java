@@ -21,7 +21,7 @@ public class OrderServiceProxy {
 
   public Mono<OrderInfo> findOrderById(String orderId) {
     Mono<ClientResponse> response = client
-            .get()
+            .get( )
             .uri(orderDestinations.getOrderServiceUrl() + "/orders/{orderId}", orderId)
             .exchange();
     return response.flatMap(resp -> {
