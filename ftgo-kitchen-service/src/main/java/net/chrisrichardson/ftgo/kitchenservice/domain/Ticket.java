@@ -158,6 +158,7 @@ public class Ticket {
       case CANCEL_PENDING:
         this.state = TicketState.CANCELLED;
         TicketDomainEvent event = new TicketCancelled();
+        // Lifecycle test: behavior is unchanged.
         return singletonList(event);
       default:
         throw new UnsupportedStateTransitionException(state);
