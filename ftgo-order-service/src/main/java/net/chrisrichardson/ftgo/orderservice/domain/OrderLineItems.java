@@ -67,9 +67,9 @@ public class OrderLineItems {
   }
 
   LineItemQuantityChange lineItemQuantityChange(OrderRevision orderRevision) {
-    Money currentOrderTotal = orderTotal();
+    Money previousTotal = orderTotal();
     Money delta = changeToOrderTotal(orderRevision);
-    Money newOrderTotal = currentOrderTotal.add(delta);
-    return new LineItemQuantityChange(currentOrderTotal, newOrderTotal, delta);
+    Money newOrderTotal = previousTotal.add(delta);
+    return new LineItemQuantityChange(previousTotal, newOrderTotal, delta);
   }
 }
