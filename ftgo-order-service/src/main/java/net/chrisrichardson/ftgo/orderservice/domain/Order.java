@@ -27,7 +27,7 @@ public class Order {
     List<OrderDomainEvent> events = singletonList(new OrderCreatedEvent(
             new OrderDetails(consumerId, restaurant.getId(), orderLineItems,
                     order.getOrderTotal()),
-            deliveryInformation.getDeliveryAddress(),
+            null,
             restaurant.getName()));
     return new ResultWithDomainEvents<>(order, events);
   }
