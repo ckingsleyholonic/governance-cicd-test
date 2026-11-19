@@ -225,17 +225,26 @@ SPEC_NAVIGATION = """<script>
 </script>"""
 
 
-def has_uncovered_downstream_change(result):
+def downstream_badge(result):
     scope = result.get('scope', {})
     if (result.get('status') != 'completed' or result.get('error') is not None
             or result['verdict'] is not None or result['answers'] or result['findings']
-            or not scope or set(scope.values()) != {'not_affected'}):
-        return False
+            or set(scope.values()) != {'not_affected'}):
+        return None
     events = (result.get('event_impact') or {}).get('routes', ())
     saga = result.get('saga_impact') or {}
-    return (any(route['status'] in ('removed', 'added') or
-                route['status'] == 'payload_changed' and route.get('fields') for route in events)
-            or bool(saga.get('commands') or saga.get('compensations')))
+    if (any(route['status'] in ('removed', 'added') or
+            route['status'] == 'payload_changed' and route.get('fields') for route in events)
+            or saga.get('commands') or saga.get('compensations')):
+        return 'Not a violation'
+
+    api = result.get('api_impact') or {}
+    if api.get('complete') is True:
+        if api.get('changed') is True and (api.get('before') or api.get('after')):
+            return 'Downstream Consequence'
+        if api.get('changed') is False and api.get('before') and api.get('after'):
+            return 'No downstream change'
+    return None
 
 
 def removed_event_consequence(route):
@@ -334,11 +343,15 @@ def render(result, repo, head, *, pr_number=None, platform_origin=None, pending_
                      + esc(workflow_finding['message']) + '</p>')
         laws_html.append('<article class="checked-spec">' + focus
                          + statement + gap + trace + '</article>')
-    uncovered_change = has_uncovered_downstream_change(result)
-    no_findings = ('<p>No approved specification applies to the downstream change shown below.</p>' if uncovered_change else
-                   '<p>No changed source was linked to an approved specification in this check.</p>'
-                   if not result['answers'] and conclusion(result) == 'inconclusive'
-                   else '<p>No specification violations were reported.</p>')
+    badge = downstream_badge(result)
+    if badge == 'No downstream change':
+        no_findings = '<p>No approved specification applies to the mapped gateway routes.</p>'
+    elif badge:
+        no_findings = '<p>No approved specification applies to the downstream change shown below.</p>'
+    elif not result['answers'] and conclusion(result) == 'inconclusive':
+        no_findings = '<p>No changed source was linked to an approved specification in this check.</p>'
+    else:
+        no_findings = '<p>No specification violations were reported.</p>'
     law_section = ('<section><h2>Specifications affected by violations</h2>'
                    + (''.join(laws_html) or no_findings) + '</section>')
 
@@ -508,7 +521,7 @@ def render(result, repo, head, *, pr_number=None, platform_origin=None, pending_
                    f'rel="noopener noreferrer">View PR #{pr_number} on GitHub</a>')
     verdict = esc(conclusion(result))
     heading = 'Workflow specification finding' if workflow_finding else 'Shared governance check'
-    verdict_text = esc('Not a violation' if uncovered_change else conclusion(result))
+    verdict_text = esc(badge or conclusion(result))
     return ('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
             '<title>Holonic PR analysis</title><style>body{font:16px system-ui;max-width:72rem;margin:3rem auto;'
             'padding:0 1rem;color:#1a2637}section{border:1px solid #d9e2eb;border-radius:12px;padding:1rem 1.5rem;'
