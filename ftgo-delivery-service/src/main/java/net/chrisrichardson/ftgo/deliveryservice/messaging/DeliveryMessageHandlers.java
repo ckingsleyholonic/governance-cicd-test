@@ -48,7 +48,8 @@ public class DeliveryMessageHandlers {
 
   public void handleTicketAcceptedEvent(DomainEventEnvelope<TicketAcceptedEvent> dee) {
     LocalDateTime readyBy = dee.getEvent().getReadyBy();
-    deliveryService.scheduleDelivery(Long.parseLong(dee.getAggregateId()), readyBy);
+    long ticketId = Long.parseLong(dee.getAggregateId());
+    deliveryService.scheduleDelivery(ticketId, readyBy);
   }
 
   public void handleTicketCancelledEvent(DomainEventEnvelope<TicketCancelled> dee) {
