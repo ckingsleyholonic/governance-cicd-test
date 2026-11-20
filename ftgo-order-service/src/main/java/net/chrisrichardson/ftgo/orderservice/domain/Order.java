@@ -108,7 +108,7 @@ public class Order {
     switch (state) {
       case CANCEL_PENDING:
         this.state = OrderState.CANCELLED;
-        return singletonList(new OrderCancelled());
+        return singletonList(new OrderRejected());
       default:
         throw new UnsupportedStateTransitionException(state);
     }

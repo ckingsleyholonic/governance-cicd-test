@@ -26,7 +26,6 @@ public class DeliveryMessageHandlers {
   public DomainEventHandlers domainEventHandlers() {
     return DomainEventHandlersBuilder
             .forAggregateType(KitchenServiceChannels.TICKET_EVENT_CHANNEL)
-            .onEvent(TicketAcceptedEvent.class, this::handleTicketAcceptedEvent)
             .onEvent(TicketCancelled.class, this::handleTicketCancelledEvent)
             .andForAggregateType(OrderServiceChannels.ORDER_EVENT_CHANNEL)
             .onEvent(OrderCreatedEvent.class, this::handleOrderCreatedEvent)
