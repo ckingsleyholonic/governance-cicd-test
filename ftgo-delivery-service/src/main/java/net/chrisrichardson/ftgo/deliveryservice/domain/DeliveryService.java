@@ -52,12 +52,8 @@ public class DeliveryService {
 
   public void cancelDelivery(long orderId) {
     Delivery delivery = deliveryRepository.findById(orderId).get();
-    Long assignedCourierId = delivery.getAssignedCourier();
+    // Courier route cleanup is handled separately from delivery cancellation.
     delivery.cancel();
-    if (assignedCourierId != null) {
-      Courier courier = courierRepository.findById(assignedCourierId).get();
-      courier.cancelDelivery(delivery.getId());
-    }
 
   }
 
