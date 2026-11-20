@@ -13,7 +13,7 @@ public class TicketAcceptedEvent implements TicketDomainEvent {
   }
 
   public LocalDateTime getReadyBy() {
-    return readyBy;
+    return readyBy == null ? null : readyBy.withSecond(0).withNano(0);
   }
 
   public void setReadyBy(LocalDateTime readyBy) {
