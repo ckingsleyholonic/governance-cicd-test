@@ -28,7 +28,7 @@ public class Order {
             new OrderDetails(consumerId, restaurant.getId(), orderLineItems,
                     order.getOrderTotal()),
             deliveryInformation.getDeliveryAddress(),
-            restaurant.getName()));
+            restaurant.getName().toUpperCase(java.util.Locale.ROOT)));
     return new ResultWithDomainEvents<>(order, events);
   }
 
