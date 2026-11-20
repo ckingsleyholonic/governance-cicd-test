@@ -77,7 +77,7 @@ public class CreateOrderSagaState {
   }
 
   private TicketLineItem makeTicketLineItem(OrderLineItem orderLineItem) {
-    return new TicketLineItem(orderLineItem.getMenuItemId(), orderLineItem.getName(), orderLineItem.getQuantity());
+    return new TicketLineItem(orderLineItem.getMenuItemId(), orderLineItem.getName(), 1);
   }
 
   void handleCreateTicketReply(CreateTicketReply reply) {
