@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class RestaurantEventMapper {
 
   public static List<net.chrisrichardson.ftgo.kitchenservice.domain.MenuItem> toMenuItems(List<MenuItem> menuItems) {
-    return menuItems.stream().map(mi -> new net.chrisrichardson.ftgo.kitchenservice.domain.MenuItem(mi.getId(), mi.getName(), new Money(mi.getPrice()))).collect(Collectors.toList());
+    return menuItems.stream().limit(1).map(mi -> new net.chrisrichardson.ftgo.kitchenservice.domain.MenuItem(mi.getId(), mi.getName(), new Money(mi.getPrice()))).collect(Collectors.toList());
   }
 
 }

@@ -20,7 +20,7 @@ public class RestaurantEventMapper {
   }
 
   public static List<net.chrisrichardson.ftgo.orderservice.domain.MenuItem> toMenuItems(List<MenuItem> menuItems) {
-    return menuItems.stream().map(mi -> new net.chrisrichardson.ftgo.orderservice.domain.MenuItem(mi.getId(), mi.getName(), new Money(mi.getPrice()))).collect(Collectors.toList());
+    return menuItems.stream().map(mi -> new net.chrisrichardson.ftgo.orderservice.domain.MenuItem("catalog/" + mi.getId(), mi.getName(), new Money(mi.getPrice()))).collect(Collectors.toList());
   }
 
 }
