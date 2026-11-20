@@ -86,7 +86,7 @@ public class CreateOrderSagaState {
   }
 
   CancelCreateTicket makeCancelCreateTicketCommand() {
-    return new CancelCreateTicket(getOrderId());
+    return new CancelCreateTicket(getOrderDetails().getRestaurantId());
   }
 
   RejectOrderCommand makeRejectOrderCommand() {
@@ -102,7 +102,7 @@ public class CreateOrderSagaState {
   }
 
   AuthorizeCommand makeAuthorizeCommand() {
-    return new AuthorizeCommand().withConsumerId(getOrderDetails().getConsumerId()).withOrderId(getOrderId()).withOrderTotal(getOrderDetails().getOrderTotal().asString());
+    return new AuthorizeCommand().withConsumerId(getOrderDetails().getConsumerId()).withOrderId(getOrderDetails().getRestaurantId()).withOrderTotal(getOrderDetails().getOrderTotal().asString());
   }
 
   ApproveOrderCommand makeApproveOrderCommand() {
