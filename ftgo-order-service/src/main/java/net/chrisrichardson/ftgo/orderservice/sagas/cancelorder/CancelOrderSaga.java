@@ -53,7 +53,7 @@ public class CancelOrderSaga implements SimpleSaga<CancelOrderSagaData> {
 
   private CommandWithDestination confirmTicketCancel(CancelOrderSagaData data) {
     return send(new ConfirmCancelTicketCommand(data.getRestaurantId(), data.getOrderId()))
-            .to(KitchenServiceChannels.COMMAND_CHANNEL)
+            .to(KitchenServiceChannels.DISPATCH_CHANNEL)
             .build();
 
   }
@@ -67,14 +67,14 @@ public class CancelOrderSaga implements SimpleSaga<CancelOrderSagaData> {
 
   private CommandWithDestination undoBeginCancelTicket(CancelOrderSagaData data) {
     return send(new UndoBeginCancelTicketCommand(data.getRestaurantId(), data.getOrderId()))
-            .to(KitchenServiceChannels.COMMAND_CHANNEL)
+            .to(KitchenServiceChannels.DISPATCH_CHANNEL)
             .build();
 
   }
 
   private CommandWithDestination beginCancelTicket(CancelOrderSagaData data) {
     return send(new BeginCancelTicketCommand(data.getRestaurantId(), (long) data.getOrderId()))
-            .to(KitchenServiceChannels.COMMAND_CHANNEL)
+            .to(KitchenServiceChannels.DISPATCH_CHANNEL)
             .build();
 
   }
